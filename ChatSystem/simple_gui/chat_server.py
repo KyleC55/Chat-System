@@ -25,7 +25,7 @@ class Server:
         # initialize past chat indices
         self.indices = {}
         # sonnet
-        self.sonnet = indexer.PIndex("Chat-System/ChatSystem/AllSonnets.txt")
+        self.sonnet = indexer.PIndex("AllSonnets.txt")
 
     def new_client(self, sock):
         # add to all sockets and to new clients
@@ -256,4 +256,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-
