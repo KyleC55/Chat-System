@@ -17,6 +17,7 @@ class Client:
         self.local_msg = ''
         self.peer_msg = ''
         self.args = args
+        
 
     def quit(self):
         self.socket.shutdown(socket.SHUT_RDWR)
@@ -33,6 +34,7 @@ class Client:
         reading_thread = threading.Thread(target=self.read_input)
         reading_thread.daemon = True
         reading_thread.start()
+        self.gui = GUI(self.send, self.recv, self.sm, self.socket)
 
     def shutdown_chat(self):
         return
