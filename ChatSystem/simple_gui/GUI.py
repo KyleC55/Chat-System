@@ -93,11 +93,6 @@ class GUI:
         self.login_button.place(relwidth= 0.2,
                                 relheight=0.1,
                                 relx = 0.25,
-                                rely = 0.75) 
-        
-        self.login_button.place(relwidth= 0.2,
-                                relheight=0.1,
-                                relx = 0.25,
                                 rely = 0.7) 
         self.sign_up_button = Button(self.login,
                                      text="Create Account",
@@ -109,102 +104,103 @@ class GUI:
     def sign_up(self):
         def sign_up():
             new_user = self.new_username.get()
-            new_password = self.new_password.get()
-            confirm_password = self.confirm_password.get()
+            new_pass = self.new_password.get()
+            confirm_pass = self.confirm_password.get()
 
             with open("ChatSystem/simple_gui/all_users.pickle", "rb") as user_file:
                 all_users = pickle.load(user_file)
                 if new_user in all_users: 
                     msgb.showerror(message="Username already exists")
-                    all_users[new_user] = new_password
+                    all_users[new_user] = new_pass
                     with open("ChatSystem/simple_gui/all_users.pickle", "wb") as user_file:
                         pickle.dump(all_users, user_file)
-                        self.goAhead(new_user)
+                    self.window_sign_up.destroy()
+                    self.goAhead(new_user)
                 else:
                     msgb.showerror(message="Your password does not match") 
 
-                    self.window_sign_up = Toplevel(self.login)
-                    self.window_sign_up.title("Sign Up")
-                    self.window_sign_up.configure(width=400,
-                                                  height=300,
-                                                  bg="#17202A")
+        self.window_sign_up = Toplevel(self.login)
+        self.window_sign_up.title("Sign Up")
+        self.window_sign_up.configure(width=400,
+                                      height=300,
+                                      bg="#17202A")
                     
-                    self.new_username = StringVar()
-                    self.label_new_username =Label(self.window_sign_up,
+        self.new_username = StringVar()
+        self.label_new_username =Label(self.window_sign_up,
                                                   text="Username: ",
                                                   font="Arial 12 bold")
-                    self.label_new_username.place(relheight=0.15,
-                                                  relx=0.075,
-                                                  rely=0.08)
-                    self,entry_username = Entry(self.window_sign_up,
-                                                font="Arial 12",
-                                                textvariable=self.new_username)
-                    self.entry_username.place(relwidth=0.4,
-                                              relheight=0.1,
-                                              relx=0.52,
-                                              rely=0.1)
+        self.label_new_username.place(relheight=0.15,
+                                      relx=0.075,
+                                      rely=0.08)
+        self.entry_username = Entry(self.window_sign_up,
+                                    font="Arial 12",
+                                    textvariable=self.new_username)
+        self.entry_username.place(relwidth=0.4,
+                                  relheight=0.1,
+                                  relx=0.52,
+                                  rely=0.1)
                     
-                    self.new_password = StringVar()
+        self.new_password = StringVar()
 
-                    self.label_new_password = Label(self.window_sign_up,
+        self.label_new_password = Label(self.window_sign_up,
                                         text="Password: ",
                                         font="Arial 12 bold")
 
-                    self.label_new_password.place(relheight=0.15,
+        self.label_new_password.place(relheight=0.15,
                                       relx=0.075,
                                       rely=0.23)
 
-                    self.label_new_password.configure(bg = "#EAECEE")
+        self.label_new_password.configure(bg = "#EAECEE")
 
-                    self.entry_new_password = Entry(self.window_sign_up,
+        self.entry_new_password = Entry(self.window_sign_up,
                                         font="Arial 12",
                                         show="*",
                                         textvariable=self.new_password)
 
-                    self.entry_new_password.place(relwidth=0.4,
+        self.entry_new_password.place(relwidth=0.4,
                                       relheight=0.1,
                                       relx=0.52,
                                       rely=0.25)
 
-                    # confirm password label and entry
-                    self.confirm_password = StringVar()
+        # confirm password label and entry
+        self.confirm_password = StringVar()
 
-                    self.label_confirm_password = Label(self.window_sign_up,
+        self.label_confirm_password = Label(self.window_sign_up,
                                             text="Confirm Password: ",
                                             font="Arial 12 bold")
 
-                    self.label_confirm_password.place(relheight=0.15,
+        self.label_confirm_password.place(relheight=0.15,
                                           relx=0.07,
                                           rely=0.38
                                           )
         
-                    self.label_confirm_password.configure(bg = "#EAECEE")
+        self.label_confirm_password.configure(bg = "#EAECEE")
 
-                    self.entry_password = Entry(self.window_sign_up,
+        self.entry_password = Entry(self.window_sign_up,
                                     font="Arial 12",
                                     show="*",
                                     textvariable=self.confirm_password)
 
-                    self.entry_password.place(relwidth=0.4,
+        self.entry_password.place(relwidth=0.4,
                                   relheight=0.1,
                                   relx=0.52,
                                   rely=0.4)
-                    # Confirming password label and entry
-                    # confirm password label and entry
-            self.confirm_password = StringVar()
+        # Confirming password label and entry
+        # confirm password label and entry
+        self.confirm_password = StringVar()
 
-            self.label_confirm_password = Label(self.window_sign_up,
+        self.label_confirm_password = Label(self.window_sign_up,
                                             text="Confirm Password: ",
                                             font="Arial 12 bold")
 
-            self.label_confirm_password.place(relheight=0.15,
+        self.label_confirm_password.place(relheight=0.15,
                                           relx=0.07,
                                           rely=0.38
                                           )
         
-            self.label_confirm_password.configure(bg = "#EAECEE")
+        self.label_confirm_password.configure(bg = "#EAECEE")
 
-            self.entry_password = Entry(self.window_sign_up,
+        self.entry_password = Entry(self.window_sign_up,
                                     font="Arial 12",
                                     show="*",
                                     textvariable=self.confirm_password)
@@ -345,7 +341,7 @@ class GUI:
                               width= 20,
                               bg="#ABB2B9",
                               command = self.start_game)
-        self.buttomG.place(relx=0.88,
+        self.buttonG.place(relx=0.88,
                            rely=0.008,
                            relheight=0.06,
                            relwidth=0.11)
