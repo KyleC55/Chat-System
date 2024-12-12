@@ -9,7 +9,7 @@ from chat_utils import *
 import os
 import json
 
-#Initialization for Pickle File 
+# Initialization for Pickle File 
 pickle_file_path = "ChatSystem/simple_gui/all_users.pickle"
 
 # Make sure the pickle file exists
@@ -18,14 +18,13 @@ os.makedirs(os.path.dirname(pickle_file_path), exist_ok=True)
 if not os.path.exists(pickle_file_path) or os.path.getsize(pickle_file_path) == 0: 
     with open(pickle_file_path, "wb") as f:
         pickle.dump({}, f)
-        print("Initialized all_user.pickle with an empty dictionary.")
+        print("Initialized all_users.pickle with an empty dictionary.")
 else:
-    print("all_user.pickle already exists.")
-
+    print("all_users.pickle already exists.")
 
 class GUI:
     # constructor method
-    def __init__(self, send, recv, sm, s):
+    def __init__(self, send=None, recv=None, sm=None, s=None):
         self.Window = Tk()
         self.Window.withdraw()
         self.send = send
@@ -34,6 +33,7 @@ class GUI:
         self.socket = s
         self.my_msg = ""
         self.system_msg = ""
+        self.game_started = False  # Flag to prevent multiple game windows
 
     def login(self):
         # login window
@@ -227,7 +227,7 @@ class GUI:
 
     def goAhead(self, name):
         if len(name) > 0:
-            msg = json.dumps({"action":"login", "name": name})
+            msg = json.dumps({"action": "login", "name": name})
             self.send(msg)
             response = json.loads(self.recv())
             if response["status"] == 'ok':
@@ -236,7 +236,7 @@ class GUI:
                 self.sm.set_myname(name)
                 self.layout(name)
                 self.textCons.config(state=NORMAL)
-                self.textCons.insert(END, menu +"\n\n")
+                self.textCons.insert(END, menu + "\n\n")
                 self.textCons.config(state=DISABLED)
                 self.textCons.see(END)
 
@@ -335,96 +335,97 @@ class GUI:
         self.my_msg = msg
         self.entryMsg.delete(0, END)
 
-    def request_time(self):
-        self.my_msg = "time"
-
-    def start_game(self):
-        self.my_msg = "game"
-
     def game_layout(self):
+        if self.game_started:
+            return  # Prevent multiple game windows
+        self.game_started = True
+
         self.gameWindow = Toplevel(self.Window)
         self.gameWindow.title("Evan's Tic Tac Toe")
-        Label(self.gameWindow, text="Player 1: X", font="times 15").grid(row=0, column=1)
-        Label(self.gameWindow, text="Player 2: 0", font="times 15").grid(row=0, column=2)
-        self.button1 = Button(self.gameWindow, width=15, height=7, font=('Times 16 bold'), command=self.checker1)
-        self.button1.grid(row=1, column=1)
-        self.button2 = Button(self.gameWindow, width=15, height=7, font=('Times 16 bold'), command=self.checker2)
-        self.button2.grid(row=1, column=2)
-        self.button3 = Button(self.gameWindow, width=15, height=7, font=('Times 16 bold'), command=self.checker3)
-        self.button3.grid(row=1, column=3)
-        self.button4 = Button(self.gameWindow, width=15, height=7, font=('Times 16 bold'), command=self.checker4)
-        self.button4.grid(row=2, column=1)
-        self.button5 = Button(self.gameWindow, width=15, height=7, font=('Times 16 bold'), command=self.checker5)
-        self.button5.grid(row=2, column=2)
-        self.button6 = Button(self.gameWindow, width=15, height=7, font=('Times 16 bold'), command=self.checker6)
-        self.button6.grid(row=2, column=3)
-        self.button7 = Button(self.gameWindow, width=15, height=7, font=('Times 16 bold'), command=self.checker7)
-        self.button7.grid(row=3, column=1)
-        self.button8 = Button(self.gameWindow, width=15, height=7, font=('Times 16 bold'), command=self.checker8)
-        self.button8.grid(row=3, column=2)
-        self.button9 = Button(self.gameWindow, width=15, height=7, font=('Times 16 bold'), command=self.checker9)
-        self.button9.grid(row=3, column=3)
+        self.gameWindow.protocol("WM_DELETE_WINDOW", self.on_game_close)
 
-    def checker1(self):
-        self.my_msg = "press_button_1"
-    def checker2(self):
-        self.my_msg = "press_button_2"
-    def checker3(self):
-        self.my_msg = "press_button_3"
-    def checker4(self):
-        self.my_msg = "press_button_4"
-    def checker5(self):
-        self.my_msg = "press_button_5"
-    def checker6(self):
-        self.my_msg = "press_button_6"
-    def checker7(self):
-        self.my_msg = "press_button_7"
-    def checker8(self):
-        self.my_msg = "press_button_8"
-    def checker9(self):
-        self.my_msg = "press_button_9"
+        Label(self.gameWindow, text="Player 1: X", font="times 15").grid(row=0, column=1)
+        Label(self.gameWindow, text="Player 2: O", font="times 15").grid(row=0, column=2)
+        self.buttons = []
+        for i in range(3):
+            for j in range(1, 4):
+                btn = Button(self.gameWindow, width=15, height=7, font=('Times 16 bold'), 
+                             command=lambda pos=i*3 + j-1: self.checker(pos))
+                btn.grid(row=i+1, column=j)
+                self.buttons.append(btn)
+
+    def checker(self, position):
+        # Send move to the server
+        self.sm.send_move(position)
+
+    def on_game_close(self):
+        if self.gameWindow:
+            self.gameWindow.destroy()
+            self.game_started = False
 
     def proc(self):
         while True:
-            read, write, error = select.select([self.socket], [], [], 0)
-            peer_msg = ""
-            if self.socket in read:
-                peer_msg = self.recv()
+            try:
+                read, write, error = select.select([self.socket], [], [], 0)
+                peer_msg = ""
+                if self.socket in read:
+                    peer_msg = self.recv()
 
-            if len(self.my_msg) > 0 or len(peer_msg) > 0:
-                self.system_msg = self.sm.proc(self.my_msg, peer_msg)
-                self.my_msg = ""  # Reset my_msg after processing
+                if len(self.my_msg) > 0 or len(peer_msg) > 0:
+                    self.system_msg = self.sm.proc(self.my_msg, peer_msg)
+                    self.my_msg = ""  # Reset my_msg after processing
 
-                if self.system_msg == "[Server]: Enjoy Evans Tic Tac Toe!":
-                    self.game_layout()
-                    self.textCons.config(state=NORMAL)
-                    self.textCons.insert(END, self.system_msg + "\n\n")
-                    self.textCons.config(state=DISABLED)
-                    self.textCons.see(END)
-
-                elif self.system_msg == "serverinfoPlayer 1":
-                    msgb.showinfo(title="Result", message="Player 1 wins")
-                    self.gameWindow.destroy()
-
-                elif self.system_msg == "serverinfoPlayer 2":
-                    msgb.showinfo(title="Result", message="Player 2 wins")
-                    self.gameWindow.destroy()
-
-                elif self.system_msg == "serverinfoTie":
-                    msgb.showinfo(title="Result", message="Draw!")
-                    self.gameWindow.destroy()
-
-                else:
-                    # Normal message
-                    if self.system_msg.strip():
+                    # Handle system messages
+                    if "[Server]: Enjoy Evans Tic Tac Toe!" in self.system_msg and not self.game_started:
+                        self.Window.after(0, self.game_layout)  # Schedule on main thread
                         self.textCons.config(state=NORMAL)
-                        self.textCons.insert(END, self.system_msg + '\n\n')
+                        self.textCons.insert(END, self.system_msg + "\n\n")
                         self.textCons.config(state=DISABLED)
                         self.textCons.see(END)
 
+                    elif self.system_msg.startswith("update_board:"):
+                        _, board_str, current_player = self.system_msg.split(":")
+                        board = board_str.split(",")
+                        self.update_game_board(board)
+                        self.update_turn_indicator(current_player)
+
+                    elif self.system_msg.startswith("game_result:"):
+                        _, winner = self.system_msg.split(":")
+                        if winner == "Draw":
+                            msgb.showinfo(title="Result", message="It's a draw!")
+                        else:
+                            msgb.showinfo(title="Result", message=f"{winner} wins!")
+                        if self.gameWindow:
+                            self.gameWindow.destroy()
+                            self.game_started = False
+
+                    else:
+                        # Normal message
+                        if self.system_msg.strip():
+                            self.textCons.config(state=NORMAL)
+                            self.textCons.insert(END, self.system_msg + '\n\n')
+                            self.textCons.config(state=DISABLED)
+                            self.textCons.see(END)
+            except Exception as e:
+                print(f"Error in proc thread: {e}")
+                break
+
+    def update_game_board(self, board):
+        # Update the GUI buttons based on the board state
+        for idx, mark in enumerate(board):
+            if mark == "X":
+                self.buttons[idx].config(text="X", state=DISABLED, bg="lightblue")
+            elif mark == "O":
+                self.buttons[idx].config(text="O", state=DISABLED, bg="lightgreen")
+            else:
+                self.buttons[idx].config(text="", state=NORMAL, bg="SystemButtonFace")
+
+    def update_turn_indicator(self, current_player):
+        # Corrected reference to self.sm.get_myname()
+        if self.sm.get_myname() == current_player:
+            self.labelHead.config(text=f"Logged into: {self.name} (Your turn)")
+        else:
+            self.labelHead.config(text=f"Logged into: {self.name} (Opponent's turn)")
+
     def run(self):
         self.login()
-
-if __name__ == "__main__": 
-    g = GUI()  # Placeholder
-    g.run()

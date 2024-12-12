@@ -1,11 +1,8 @@
 import socket
 import time
 
-# use local loop back address by default
+# Use local loopback address by default
 CHAT_IP = '127.0.0.1'
-# CHAT_IP = socket.gethostbyname(socket.gethostname())
-#CHAT_IP = socket.gethostbyname(socket.gethostname())
-
 CHAT_PORT = 1112
 SERVER = (CHAT_IP, CHAT_PORT)
 
@@ -40,38 +37,37 @@ def print_state(state):
         print('Error: wrong state')
 
 def mysend(s, msg):
-    #append size to message and send it
+    # Append size to message and send it
     msg = ('0' * SIZE_SPEC + str(len(msg)))[-SIZE_SPEC:] + str(msg)
     msg = msg.encode()
     total_sent = 0
-    while total_sent < len(msg) :
+    while total_sent < len(msg):
         sent = s.send(msg[total_sent:])
-        if sent==0:
-            print('server disconnected')
+        if sent == 0:
+            print('Server disconnected')
             break
         total_sent += sent
 
 def myrecv(s):
-    #receive size first
+    # Receive size first
     size = ''
     while len(size) < SIZE_SPEC:
         text = s.recv(SIZE_SPEC - len(size)).decode()
         if not text:
-            print('disconnected')
+            print('Disconnected')
             return('')
         size += text
     size = int(size)
-    #now receive message
+    # Now receive message
     msg = ''
     while len(msg) < size:
-        text = s.recv(size-len(msg)).decode()
-        if text == b'':
-            print('disconnected')
+        text = s.recv(size - len(msg)).decode()
+        if text == '':
+            print('Disconnected')
             break
         msg += text
-    #print ('received '+message)
-    return (msg)
+    return msg
 
 def text_proc(text, user):
     ctime = time.strftime('%d.%m.%y,%H:%M', time.localtime())
-    return('(' + ctime + ') ' + user + ' : ' + text) # message goes directly to screen
+    return '(' + ctime + ') ' + user + ' : ' + text  # Message goes directly to screen

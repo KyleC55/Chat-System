@@ -25,16 +25,19 @@ class ClientSM:
         msg = json.dumps({"action": "connect", "target": peer})
         mysend(self.s, msg)
         response = json.loads(myrecv(self.s))
-        if response["status"] == "success":
+        status = response.get("status", "")
+        if status == "success":
             self.peer = peer
             self.out_msg += 'You are connected with ' + self.peer + '\n'
             return True
-        elif response["status"] == "busy":
+        elif status == "busy":
             self.out_msg += 'User is busy. Please try again later\n'
-        elif response["status"] == "self":
+        elif status == "self":
             self.out_msg += 'Cannot talk to yourself\n'
-        else:
+        elif status == "not_online":
             self.out_msg += 'User is not online, try again later\n'
+        else:
+            self.out_msg += 'Unknown status received from server.\n'
         return False
 
     def disconnect(self):
@@ -42,6 +45,11 @@ class ClientSM:
         mysend(self.s, msg)
         self.out_msg += 'You are disconnected from ' + self.peer + '\n'
         self.peer = ''
+
+    def send_move(self, position): 
+        move_msg = f"press_button_{position + 1}"
+        msg = json.dumps({"action": "exchange", "from": self.me, "message": move_msg})
+        mysend(self.s, msg)
 
     def proc(self, my_msg, peer_msg):
         self.out_msg = ''
@@ -114,23 +122,60 @@ class ClientSM:
                     return self.out_msg
 
                 action = peer_msg.get("action", "")
+                status = peer_msg.get("status", "")
 
                 if action == "connect":
-                    peer = peer_msg["from"]
-                    self.out_msg += f"You're connected with {peer}\n"
-                    self.out_msg += 'Chat away!\n\n-----------------------------------\n'
-                    self.state = S_CHATTING
-
+                    if status == "success":
+                        peer = peer_msg.get("target", "")
+                        self.peer = peer
+                        self.state = S_CHATTING
+                        self.out_msg += 'You are connected with ' + self.peer + '\n'
+                        self.out_msg += 'Chat away!\n\n-----------------------------------\n'
+                    elif status == "request":
+                        from_user = peer_msg.get("from", "")
+                        accept = True  # Automatically accept the game request
+                        if accept:
+                            self.peer = from_user
+                            self.state = S_CHATTING
+                            # Optionally, send an acknowledgment to the server
+                            self.out_msg += f"{from_user} has connected with you for a game.\nEnjoy the game!\n\n-----------------------------------\n"
+                        else:
+                            # Optionally handle rejection
+                            self.out_msg += f"{from_user} tried to connect with you, but you rejected the game.\n"
                 elif action == "start_game":
                     # Server initiating start of the game
                     self.out_msg += "[Server]: Enjoy Evans Tic Tac Toe!\n\n"
 
+                elif action == "update_board":
+                    board = peer_msg.get("board", [])
+                    current_player = peer_msg.get("current_player", "")
+                    board_str = ",".join([mark if mark else " " for mark in board])
+                    self.out_msg += f"update_board:{board_str}:{current_player}\n"
+
+                elif action == "game_result":
+                    winner = peer_msg.get("winner", "")
+                    self.out_msg += f"game_result:{winner}\n"
+
+            return self.out_msg
+
         elif self.state == S_CHATTING:
             # Sending chat messages to the server
             if len(my_msg) > 0:
-                mysend(self.s, json.dumps({"action": "exchange", 
-                                           "from": "[" + self.me + "]", 
-                                           "message": my_msg}))
+                if my_msg.startswith("press_button_"): 
+                    try: 
+                        position = int(my_msg.split("_")[-1]) - 1
+                        if 0 <= position < 9:
+                            self.send_move(position)
+                        else:
+                            self.out_msg += "Invalid move position.\n"
+                    except ValueError:
+                        self.out_msg += "Invalid move format.\n"
+                else:
+                    msg = json.dumps({"action": "exchange",
+                                      "from": "[" + self.me + "]",
+                                      "message": my_msg}) 
+                    mysend(self.s, msg)
+                
                 if my_msg == 'bye':
                     self.disconnect()
                     self.state = S_LOGGEDIN
@@ -152,13 +197,22 @@ class ClientSM:
                     self.out_msg += "Your peer has disconnected.\n"
                     self.state = S_LOGGEDIN
                 elif action == "connect":
-                    self.out_msg += peer_msg["from"] + " joined the chat.\n"
-                elif action == "start_game":
-                    self.out_msg += "[Server]: Enjoy Evans Tic Tac Toe!\n\n"
+                    from_user = peer_msg.get("from", "")
+                    self.out_msg += f"{from_user} has connected with you.\n"
+                elif action == "update_board":
+                    board = peer_msg.get("board", [])
+                    current_player = peer_msg.get("current_player", "")
+                    board_str = ",".join([mark if mark else " " for mark in board])
+                    self.out_msg += f"update_board:{board_str}:{current_player}\n"
+                elif action == "game_result":
+                    winner = peer_msg.get("winner", "")
+                    self.out_msg += f"game_result:{winner}\n"
 
             # If we returned to LOGGEDIN after finishing chat
             if self.state == S_LOGGEDIN:
                 self.out_msg += menu
+
+            return self.out_msg
 
         else:
             # Invalid state or error
