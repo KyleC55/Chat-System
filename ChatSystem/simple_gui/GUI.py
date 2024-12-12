@@ -98,6 +98,11 @@ class GUI:
                                      text="Create Account",
                                      font="Helvetica 12",
                                      command=self.sign_up)
+        self.sign_up_button.place(relwidth=0.2,
+                                  relheight=0.1,
+                                  relx=0.55,
+                                  rely=0.7)
+
         self.Window.mainloop() 
 
 
@@ -107,12 +112,12 @@ class GUI:
             new_pass = self.new_password.get()
             confirm_pass = self.confirm_password.get()
 
-            with open("ChatSystem/simple_gui/all_users.pickle.txt", "rb") as user_file:
+            with open("ChatSystem/simple_gui/all_users.pickle", "rb") as user_file:
                 all_users = pickle.load(user_file)
                 if new_user in all_users: 
                     msgb.showerror(message="Username already exists")
                     all_users[new_user] = new_pass
-                    with open("ChatSystem/simple_gui/all_users.pickle.txt", "wb") as user_file:
+                    with open("ChatSystem/simple_gui/all_users.pickle", "wb") as user_file:
                         pickle.dump(all_users, user_file)
                     self.window_sign_up.destroy()
                     self.goAhead(new_user)
@@ -162,31 +167,9 @@ class GUI:
                                       relx=0.52,
                                       rely=0.25)
 
-        # confirm password label and entry
-        self.confirm_password = StringVar()
-
-        self.label_confirm_password = Label(self.window_sign_up,
-                                            text="Confirm Password: ",
-                                            font="Arial 12 bold")
-
-        self.label_confirm_password.place(relheight=0.15,
-                                          relx=0.07,
-                                          rely=0.38
-                                          )
-        
-        self.label_confirm_password.configure(bg = "#EAECEE")
-
-        self.entry_password = Entry(self.window_sign_up,
-                                    font="Arial 12",
-                                    show="*",
-                                    textvariable=self.confirm_password)
-
-        self.entry_password.place(relwidth=0.4,
-                                  relheight=0.1,
-                                  relx=0.52,
-                                  rely=0.4)
         # Confirming password label and entry
         # confirm password label and entry
+     
         self.confirm_password = StringVar()
 
         self.label_confirm_password = Label(self.window_sign_up,
@@ -224,7 +207,7 @@ class GUI:
         self.log_in_username = self.username.get()
         self.log_in_password = self.password.get()
 
-        self.user_file = open("ChatSystem/simple_gui/all_users.pickle.txt", "rb")
+        self.user_file = open("ChatSystem/simple_gui/all_users.pickle", "rb")
         self.all_users = pickle.load(self.user_file)
         self.user_file.close()
 
