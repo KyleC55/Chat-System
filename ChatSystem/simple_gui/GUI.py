@@ -107,12 +107,12 @@ class GUI:
             new_pass = self.new_password.get()
             confirm_pass = self.confirm_password.get()
 
-            with open("ChatSystem/simple_gui/all_users.pickle", "rb") as user_file:
+            with open("ChatSystem/simple_gui/all_users.pickle.txt", "rb") as user_file:
                 all_users = pickle.load(user_file)
                 if new_user in all_users: 
                     msgb.showerror(message="Username already exists")
                     all_users[new_user] = new_pass
-                    with open("ChatSystem/simple_gui/all_users.pickle", "wb") as user_file:
+                    with open("ChatSystem/simple_gui/all_users.pickle.txt", "wb") as user_file:
                         pickle.dump(all_users, user_file)
                     self.window_sign_up.destroy()
                     self.goAhead(new_user)
@@ -224,7 +224,7 @@ class GUI:
         self.log_in_username = self.username.get()
         self.log_in_password = self.password.get()
 
-        self.user_file = open("ChatSystem/simple_gui/all_users.pickle", "rb")
+        self.user_file = open("ChatSystem/simple_gui/all_users.pickle.txt", "rb")
         self.all_users = pickle.load(self.user_file)
         self.user_file.close()
 
