@@ -169,7 +169,19 @@ class GUI:
                              relwidth = 0.22)
           
         self.textCons.config(cursor = "arrow")
-          
+
+        # Implementing a showtime button
+        self.buttonTime = Button(
+            self.labelBottom,
+            text="Display Time",
+            font="Helvetica 10 bold",
+            width=20,
+            bg="#ABB2B9",
+            command=self.show_time 
+        )
+        self.buttonTime.place(relx=0.77, rely=0.075, relheight=0.06, relwidth=0.22)
+
+        self.textCons.config(cursor="arrow")
         # create a scroll bar
         scrollbar = Scrollbar(self.textCons)
           
@@ -181,6 +193,11 @@ class GUI:
         scrollbar.config(command = self.textCons.yview)
           
         self.textCons.config(state = DISABLED)
+
+    # function to display the current time from server
+    def show_time(self):
+        time_request = json.dumps({"action" : "get_time"})
+        self.send(time_request)
   
     # function to basically start the thread for sending messages
     def sendButton(self, msg):
@@ -198,9 +215,22 @@ class GUI:
             if self.socket in read:
                 peer_msg = self.recv()
             if len(self.my_msg) > 0 or len(peer_msg) > 0:
+                try:
+                    message = json.loads(peer_msg)
+                    if message.get("action") == "get_time_response":
+                        current_time = message.get("time", "Unavaliable")
+                        formatted_time = f"Server Time: {current_time}"
+
+                        self.system_msg += formatted_time
+                
+                    else:
+                        self.system_msg += self.sm.proc(self.my_msg, peer_msg)
+                
+                except json.JSONDecodeError: 
+                    self.system_msg += self.sm.proc(self.my_msg, peer_msg)
+            
+
                 # print(self.system_msg)
-                self.system_msg += self.sm.proc(self.my_msg, peer_msg)
-                self.my_msg = ""
                 self.textCons.config(state = NORMAL)
                 self.textCons.insert(END, self.system_msg +"\n\n")      
                 self.textCons.config(state = DISABLED)
